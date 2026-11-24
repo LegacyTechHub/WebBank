@@ -9,6 +9,7 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_RfJU1qWDol_XsZMMk1tJuQ_VvyYna30
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
 });
+window.__wbSupabase = supabaseClient;
 [
   "webbank-session", "webbank-account", "webbank-users", "webbank-support-requests",
   "webbank-demo-session", "webbank-demo-account", "webbank-demo-users", "webbank-demo-support-requests"
@@ -1365,6 +1366,7 @@ window.addEventListener("hashchange", render);
 render();
 
 
+
 ;(function () {
   if (window.__webbankEnhancementsInstalled) return;
   window.__webbankEnhancementsInstalled = true;
@@ -1405,8 +1407,8 @@ render();
 
   document.addEventListener("change", function (e) {
     const inp = e.target;
-    if (!inp || inp.type !== "file" || !inp.files || !inp.files || inp.dataset.compressedReady) return;
-    const file = inp.files;
+    if (!inp || inp.type !== "file" || !inp.files || !inp.files[0] || inp.dataset.compressedReady) return;
+    const file = inp.files[0];
     if (!file.type.startsWith("image/") && !/\.(heic|heif|jpg|jpeg|png|webp|gif|bmp)$/i.test(file.name)) return;
     if (file.size <= 1200000) return;
 
@@ -1445,60 +1447,29 @@ render();
     });
   }
 
-  function getSupabase() {
-    if (window.supabaseClient) return window.supabaseClient;
-    if (window.sb) return window.sb;
-    if (window._supabase) return window._supabase;
-    for (const k of Object.keys(window)) {
-      try {
-        if (window[k] && window[k].auth && typeof window[k].auth.signInWithPassword === "function") {
-          return window[k];
+  function wrapSignIn() {
+    const sb = window.__wbSupabase || window.supabaseClient || window.sb;
+    if (!sb || !sb.auth || !sb.auth.signInWithPassword || sb.auth.__wbWrapped) return;
+    const orig = sb.auth.signInWithPassword.bind(sb.auth);
+    sb.auth.signInWithPassword = async function (creds) {
+      let email = creds && creds.email ? String(creds.email).trim() : "";
+      if (email && !email.includes("@")) {
+        const digits = email.replace(/\D/g, "");
+        const { data: resolvedEmail, error } = await sb.rpc("get_email_by_account_number", { p_acct: digits });
+        if (error || !resolvedEmail) {
+          return { data: { user: null, session: null }, error: { message: "No account found with that account number." } };
         }
-      } catch (_) {}
-    }
-    return null;
-  }
-
-  document.addEventListener("submit", async function (e) {
-    const form = e.target;
-    if (!form || form.dataset.acctResolved === "1") return;
-    const idInput = form.querySelector('#login-email, input[name="email"], input[type="text"]');
-    const pwInput = form.querySelector('input[type="password"], input[type="text"][data-pw-enhanced]');
-    if (!idInput || !pwInput) return;
-
-    const raw = String(idInput.value || "").trim();
-    if (!raw || raw.includes("@")) return;
-
-    const digits = raw.replace(/\D/g, "");
-    if (digits.length < 6) return;
-
-    e.preventDefault();
-    e.stopImmediatePropagation();
-
-    const sb = getSupabase();
-    if (!sb) return;
-
-    const { data: resolvedEmail, error } = await sb.rpc("get_email_by_account_number", { p_acct: digits });
-    if (error || !resolvedEmail) {
-      const errBox = form.querySelector(".error, .form-error, [id*='error']") || document.querySelector("#login-error");
-      if (errBox) {
-        errBox.textContent = "No account found with that account number.";
-        errBox.style.display = "block";
-      } else {
-        alert("No account found with that account number.");
+        email = resolvedEmail;
       }
-      return;
-    }
-
-    idInput.value = resolvedEmail;
-    form.dataset.acctResolved = "1";
-    form.requestSubmit ? form.requestSubmit() : form.submit();
-    setTimeout(() => { delete form.dataset.acctResolved; }, 500);
-  }, true);
+      return orig({ ...creds, email });
+    };
+    sb.auth.__wbWrapped = true;
+  }
 
   const initAll = () => {
     attachPasswordToggles();
     enhanceFileInputs();
+    wrapSignIn();
   };
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initAll);
