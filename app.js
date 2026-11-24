@@ -1,4 +1,4 @@
-const STORAGE = {
+﻿const STORAGE = {
   session: "webbank-active-email"
 };
 const PENDING_REGISTRATION = "webbank-pending-registration";
@@ -404,7 +404,9 @@ function fieldIcon(name) {
 }
 
 function registrationField(name, label, type, icon, attributes = "") {
-  return `<label class="field"><span class="field-label">${label}</span><span class="input-shell">${fieldIcon(icon)}<input name="${name}" type="${type}" ${attributes}></span></label>`;
+  const isPassword = type === "password";
+  const toggle = isPassword ? `<button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>` : "";
+  return `<label class="field"><span class="field-label">${label}</span><span class="input-shell${isPassword ? " password-toggle-wrapper" : ""}">${fieldIcon(icon)}<input name="${name}" type="${type}" ${attributes}>${toggle}</span></label>`;
 }
 
 function registrationSelect(name, label, icon, options, placeholder = "") {
@@ -547,8 +549,8 @@ function authView(kind) {
       <div class="auth-form-wrap"><form class="auth-form" id="auth-form" novalidate>
         <h2>Log in to Webbank</h2>
         <p class="form-intro">Enter your details to continue to your dashboard.</p>
-        <label class="field"><span>Email address</span><input name="email" type="email" autocomplete="email" placeholder="you@example.com" required></label>
-        <label class="field"><span>Password</span><input name="password" type="password" autocomplete="current-password" placeholder="Your password" required minlength="8"></label>
+        <label class="field"><span>Email or Account Number</span><input name="email" type="text" autocomplete="email" placeholder="Email or Account Number" required></label>
+        <label class="field"><span>Password</span><span class="password-toggle-wrapper"><input name="password" type="password" autocomplete="current-password" placeholder="Your password" required minlength="8"><button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
         <button class="button" type="submit">Log in <span aria-hidden="true">→</span></button>
         <p class="form-message" id="form-message" aria-live="polite"></p>
         <p class="form-switch">New to Webbank? <a href="#register">Open an account</a></p>
@@ -714,14 +716,14 @@ function profileView() {
   return `
     <section class="portal-page"><div class="page-heading"><p class="eyebrow">Your information</p><h1>Profile &amp; Security</h1><p>Review your saved profile and security preferences.</p></div>
       <section class="portal-panel profile-panel"><div class="panel-heading"><h2>Personal and account information</h2>${profile.passportPhoto ? `<img class="passport-preview" src="${profile.passportPhoto}" alt="Passport photograph preview">` : ""}</div><dl class="profile-grid">${rows}</dl></section>
-      <div class="portal-layout profile-settings"><form class="portal-panel portal-form" id="password-form"><h2>Change password</h2><label class="portal-field"><span>Current password</span><input name="currentPassword" type="password" autocomplete="current-password" minlength="8" required></label><label class="portal-field"><span>New password</span><input name="newPassword" type="password" autocomplete="new-password" minlength="8" required></label><label class="portal-field"><span>Confirm new password</span><input name="confirmNewPassword" type="password" autocomplete="new-password" minlength="8" required></label><p class="form-message" id="password-message" aria-live="polite"></p><button class="button" type="submit">Update password</button></form><section class="portal-panel security-panel"><h2>Security preferences</h2><label class="security-toggle"><span><strong>Two-Factor Authentication</strong><small>Require verification when signing in on new devices.</small></span><input type="checkbox" data-security="twoFactor" ${user.security.twoFactor ? "checked" : ""}><span class="switch-ui"></span></label><label class="security-toggle"><span><strong>Login Alerts</strong><small>Receive an alert whenever a new session starts.</small></span><input type="checkbox" data-security="loginAlerts" ${user.security.loginAlerts ? "checked" : ""}><span class="switch-ui"></span></label><p class="security-message" id="security-message" aria-live="polite"></p></section></div>
+      <div class="portal-layout profile-settings"><form class="portal-panel portal-form" id="password-form"><h2>Change password</h2><label class="portal-field password-toggle-wrapper"><span>Current password</span><input name="currentPassword" type="password" autocomplete="current-password" minlength="8" required><button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></label><label class="portal-field password-toggle-wrapper"><span>New password</span><input name="newPassword" type="password" autocomplete="new-password" minlength="8" required><button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></label><label class="portal-field password-toggle-wrapper"><span>Confirm new password</span><input name="confirmNewPassword" type="password" autocomplete="new-password" minlength="8" required><button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></label><p class="form-message" id="password-message" aria-live="polite"></p><button class="button" type="submit">Update password</button></form><section class="portal-panel security-panel"><h2>Security preferences</h2><label class="security-toggle"><span><strong>Two-Factor Authentication</strong><small>Require verification when signing in on new devices.</small></span><input type="checkbox" data-security="twoFactor" ${user.security.twoFactor ? "checked" : ""}><span class="switch-ui"></span></label><label class="security-toggle"><span><strong>Login Alerts</strong><small>Receive an alert whenever a new session starts.</small></span><input type="checkbox" data-security="loginAlerts" ${user.security.loginAlerts ? "checked" : ""}><span class="switch-ui"></span></label><p class="security-message" id="security-message" aria-live="polite"></p></section></div>
     </section>
   `;
 }
 
 function adminLoginView() {
   return `
-    <section class="portal-page admin-login-page"><form class="portal-panel portal-form admin-login-form" id="admin-login-form"><p class="eyebrow">Restricted access</p><h1>Administrator sign in</h1><p class="panel-copy">Sign in with an authorized administrator account.</p><label class="portal-field"><span>Email address</span><input name="email" type="email" autocomplete="username" required></label><label class="portal-field"><span>Password</span><input name="password" type="password" autocomplete="current-password" required></label><p class="form-message error" id="admin-login-message" aria-live="polite">${escapeHTML(adminErrorMessage)}</p><button class="button" type="submit">Sign in securely</button></form></section>
+    <section class="portal-page admin-login-page"><form class="portal-panel portal-form admin-login-form" id="admin-login-form"><p class="eyebrow">Restricted access</p><h1>Administrator sign in</h1><p class="panel-copy">Sign in with an authorized administrator account.</p><label class="portal-field"><span>Email address</span><input name="email" type="email" autocomplete="username" required></label><label class="portal-field password-toggle-wrapper"><span>Password</span><input name="password" type="password" autocomplete="current-password" required><button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></label><p class="form-message error" id="admin-login-message" aria-live="polite">${escapeHTML(adminErrorMessage)}</p><button class="button" type="submit">Sign in securely</button></form></section>
   `;
 }
 
@@ -835,12 +837,40 @@ async function render() {
   mainNav.classList.remove("open");
   menuToggle.setAttribute("aria-expanded", "false");
 }
-function readFileAsDataURL(file) {
+function resizeAndCompressImage(file, maxSize = 400, quality = 0.8) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("load", () => resolve(reader.result), { once: true });
-    reader.addEventListener("error", () => reject(reader.error), { once: true });
-    reader.readAsDataURL(file);
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      let width = img.width;
+      let height = img.height;
+      if (width > maxSize || height > maxSize) {
+        const scale = Math.min(maxSize / width, maxSize / height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        },
+        "image/jpeg",
+        quality
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Failed to load image."));
+    };
+    img.src = url;
   });
 }
 
@@ -1010,13 +1040,8 @@ document.addEventListener("submit", async (event) => {
       let user = null;
       if (isRegistration) {
         const photo = formData.get("passportPhoto");
-        if (photo instanceof File && photo.size > 1.5 * 1024 * 1024) {
-          message.className = "form-message error";
-          message.textContent = "Choose an image smaller than 1.5 MB.";
-          return;
-        }
         const profile = Object.fromEntries([...formData.entries()].filter(([field]) => !["password", "confirmPassword", "passportPhoto"].includes(field)));
-        profile.passportPhoto = photo instanceof File && photo.size ? await readFileAsDataURL(photo) : "";
+        profile.passportPhoto = photo instanceof File && photo.size ? await resizeAndCompressImage(photo) : "";
         const accountNumber = await generateAccountNumber();
         profile.accountNumber = accountNumber;
         const name = `${profile.firstName} ${profile.lastName}`;
@@ -1338,3 +1363,119 @@ menuToggle.addEventListener("click", () => {
 
 window.addEventListener("hashchange", render);
 render();
+
+;(function () {
+  if (window.__webbankEnhancementsInstalled) return;
+  window.__webbankEnhancementsInstalled = true;
+
+  const eyeOpenSVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="pointer-events:none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const eyeClosedSVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="pointer-events:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+  function attachPasswordToggles() {
+    document.querySelectorAll('input[type="password"]').forEach(inp => {
+      if (inp.dataset.pwEnhanced) return;
+      inp.dataset.pwEnhanced = "1";
+      const wrap = document.createElement("div");
+      wrap.className = "pw-toggle-wrap";
+      inp.parentNode.insertBefore(wrap, inp);
+      wrap.appendChild(inp);
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "pw-toggle-btn";
+      btn.setAttribute("aria-label", "Toggle password visibility");
+      btn.innerHTML = eyeOpenSVG;
+      wrap.appendChild(btn);
+    });
+  }
+
+  // Single delegated click listener so toggling ALWAYS works cleanly
+  document.addEventListener("click", function (e) {
+    const btn = e.target.closest(".pw-toggle-btn");
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const wrap = btn.closest(".pw-toggle-wrap");
+    const inp = wrap ? wrap.querySelector("input") : null;
+    if (!inp) return;
+    const isHidden = inp.type === "password";
+    inp.type = isHidden ? "text" : "password";
+    btn.innerHTML = isHidden ? eyeClosedSVG : eyeOpenSVG;
+  }, true);
+
+  // Auto-compress large phone camera photos (> 1MB) into lightweight JPEG before app.js reads them
+  document.addEventListener("change", function (e) {
+    const inp = e.target;
+    if (!inp || inp.type !== "file" || !inp.files || !inp.files[0] || inp.dataset.compressedReady) return;
+    const file = inp.files[0];
+    if (!file.type.startsWith("image/") && !/\.(heic|heif|jpg|jpeg|png|webp|gif|bmp)$/i.test(file.name)) return;
+    if (file.size <= 1200000) return;
+
+    e.stopImmediatePropagation();
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+      const img = new Image();
+      img.onload = function () {
+        const maxDim = 480;
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+          else { w = Math.round((w * maxDim) / h); h = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        canvas.toBlob(function (blob) {
+          if (!blob) return;
+          const dt = new DataTransfer();
+          dt.items.add(new File([blob], "photo.jpg", { type: "image/jpeg" }));
+          inp.files = dt.files;
+          inp.dataset.compressedReady = "1";
+          inp.dispatchEvent(new Event("change", { bubbles: true }));
+          setTimeout(() => { delete inp.dataset.compressedReady; }, 200);
+        }, "image/jpeg", 0.82);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }, true);
+
+  function enhanceFileInputs() {
+    document.querySelectorAll('input[type="file"]').forEach(inp => {
+      inp.setAttribute("accept", "image/*");
+    });
+  }
+
+  function setupAccountNumberLogin() {
+    const sb = window.supabaseClient || window.sb || window._supabase;
+    if (!sb || !sb.auth || !sb.auth.signInWithPassword || sb.auth.__acctWrapped) return;
+    const origSignIn = sb.auth.signInWithPassword.bind(sb.auth);
+    sb.auth.signInWithPassword = async function (creds) {
+      let email = (creds && creds.email ? String(creds.email).trim() : "");
+      if (email && !email.includes("@")) {
+        const digits = email.replace(/\D/g, "");
+        const { data, error } = await sb.from("profiles").select("email, account");
+        if (error) return { data: { user: null, session: null }, error };
+        const match = (data || []).find(p => p.account && String(p.account.accountNumber) === digits);
+        if (!match || !match.email) {
+          return { data: { user: null, session: null }, error: { message: "No account found with that account number." } };
+        }
+        email = match.email;
+      }
+      return origSignIn({ ...creds, email });
+    };
+    sb.auth.__acctWrapped = true;
+  }
+
+  const initAll = () => {
+    attachPasswordToggles();
+    enhanceFileInputs();
+    setupAccountNumberLogin();
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initAll);
+  } else {
+    initAll();
+  }
+  new MutationObserver(initAll).observe(document.documentElement, { childList: true, subtree: true });
+})();
