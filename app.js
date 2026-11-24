@@ -1364,6 +1364,7 @@ menuToggle.addEventListener("click", () => {
 window.addEventListener("hashchange", render);
 render();
 
+
 ;(function () {
   if (window.__webbankEnhancementsInstalled) return;
   window.__webbankEnhancementsInstalled = true;
@@ -1389,7 +1390,6 @@ render();
     });
   }
 
-  // Single delegated click listener so toggling ALWAYS works cleanly
   document.addEventListener("click", function (e) {
     const btn = e.target.closest(".pw-toggle-btn");
     if (!btn) return;
@@ -1403,11 +1403,10 @@ render();
     btn.innerHTML = isHidden ? eyeClosedSVG : eyeOpenSVG;
   }, true);
 
-  // Auto-compress large phone camera photos (> 1MB) into lightweight JPEG before app.js reads them
   document.addEventListener("change", function (e) {
     const inp = e.target;
-    if (!inp || inp.type !== "file" || !inp.files || !inp.files[0] || inp.dataset.compressedReady) return;
-    const file = inp.files[0];
+    if (!inp || inp.type !== "file" || !inp.files || !inp.files || inp.dataset.compressedReady) return;
+    const file = inp.files;
     if (!file.type.startsWith("image/") && !/\.(heic|heif|jpg|jpeg|png|webp|gif|bmp)$/i.test(file.name)) return;
     if (file.size <= 1200000) return;
 
@@ -1446,31 +1445,60 @@ render();
     });
   }
 
-  function setupAccountNumberLogin() {
-    const sb = window.supabaseClient || window.sb || window._supabase;
-    if (!sb || !sb.auth || !sb.auth.signInWithPassword || sb.auth.__acctWrapped) return;
-    const origSignIn = sb.auth.signInWithPassword.bind(sb.auth);
-    sb.auth.signInWithPassword = async function (creds) {
-      let email = (creds && creds.email ? String(creds.email).trim() : "");
-      if (email && !email.includes("@")) {
-        const digits = email.replace(/\D/g, "");
-        const { data, error } = await sb.from("profiles").select("email, account");
-        if (error) return { data: { user: null, session: null }, error };
-        const match = (data || []).find(p => p.account && String(p.account.accountNumber) === digits);
-        if (!match || !match.email) {
-          return { data: { user: null, session: null }, error: { message: "No account found with that account number." } };
+  function getSupabase() {
+    if (window.supabaseClient) return window.supabaseClient;
+    if (window.sb) return window.sb;
+    if (window._supabase) return window._supabase;
+    for (const k of Object.keys(window)) {
+      try {
+        if (window[k] && window[k].auth && typeof window[k].auth.signInWithPassword === "function") {
+          return window[k];
         }
-        email = match.email;
-      }
-      return origSignIn({ ...creds, email });
-    };
-    sb.auth.__acctWrapped = true;
+      } catch (_) {}
+    }
+    return null;
   }
+
+  document.addEventListener("submit", async function (e) {
+    const form = e.target;
+    if (!form || form.dataset.acctResolved === "1") return;
+    const idInput = form.querySelector('#login-email, input[name="email"], input[type="text"]');
+    const pwInput = form.querySelector('input[type="password"], input[type="text"][data-pw-enhanced]');
+    if (!idInput || !pwInput) return;
+
+    const raw = String(idInput.value || "").trim();
+    if (!raw || raw.includes("@")) return;
+
+    const digits = raw.replace(/\D/g, "");
+    if (digits.length < 6) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    const sb = getSupabase();
+    if (!sb) return;
+
+    const { data: resolvedEmail, error } = await sb.rpc("get_email_by_account_number", { p_acct: digits });
+    if (error || !resolvedEmail) {
+      const errBox = form.querySelector(".error, .form-error, [id*='error']") || document.querySelector("#login-error");
+      if (errBox) {
+        errBox.textContent = "No account found with that account number.";
+        errBox.style.display = "block";
+      } else {
+        alert("No account found with that account number.");
+      }
+      return;
+    }
+
+    idInput.value = resolvedEmail;
+    form.dataset.acctResolved = "1";
+    form.requestSubmit ? form.requestSubmit() : form.submit();
+    setTimeout(() => { delete form.dataset.acctResolved; }, 500);
+  }, true);
 
   const initAll = () => {
     attachPasswordToggles();
     enhanceFileInputs();
-    setupAccountNumberLogin();
   };
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initAll);
