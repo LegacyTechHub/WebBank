@@ -232,7 +232,7 @@ async function checkDeclinedNotifications(user) {
     <div class="receipt-modal-card declined">
       <div class="receipt-modal-icon declined" aria-hidden="true">⛔</div>
       <h2>Transfer Declined</h2>
-      <p>Your recent transfer request was declined by the administrator. No funds were deducted from your account.</p>
+      <p>Your recent transfer request was declined by the administrator. No funds were deducted from your account. Please contact the customer support for TT-Wire Transfer Refrence Code. customerservicewebbank@gmail.com</p>
       <table class="receipt-table">
         <tr><th>Status</th><td><span class="status-badge status-declined">Declined</span></td></tr>
         <tr><th>Amount</th><td>${money(Math.abs(transaction.amount), user.account.currency)}</td></tr>
