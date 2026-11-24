@@ -235,7 +235,7 @@ async function checkDeclinedNotifications(user) {
       <p>Your recent transfer request was declined. No funds were deducted from your account. Please contact the customer support for TT-Wire Transfer Refrence Code. customerservicewebbank@gmail.com</p>
       <table class="receipt-table">
         <tr><th>Status</th><td><span class="status-badge status-declined">Declined</span></td></tr>
-        <tr><th>Amount</th><td>${money(Math.abs(transaction.amount), user.account.currency)}</td></tr>
+        <tr><th>Amount</th><td>${money(Math.abs(transaction.amount), transaction.transferCurrency || user.account.currency)} (${escapeHTML(transaction.transferCurrency || user.account.currency)})</td></tr>${transaction.recipientAddress ? `<tr><th>Recipient Address</th><td>${escapeHTML(transaction.recipientAddress)}</td></tr>` : ""}${transaction.recipientCountry ? `<tr><th>Country</th><td>${escapeHTML(transaction.recipientCountry)}</td></tr>` : ""}${transaction.recipientPhone ? `<tr><th>Phone Number</th><td>${escapeHTML(transaction.recipientPhone)}</td></tr>` : ""}${transaction.bankName ? `<tr><th>Bank Name</th><td>${escapeHTML(transaction.bankName)}</td></tr>` : ""}
         <tr><th>Recipient Name</th><td>${escapeHTML(transaction.recipientName || transaction.name)}</td></tr>
         <tr><th>Bank / Routing Number</th><td>${escapeHTML(transaction.routingNumber)}</td></tr>
         <tr><th>Account Number</th><td>${escapeHTML(transaction.accountNumber)}</td></tr>
@@ -622,7 +622,7 @@ function pendingTransferActions(email, transactionId) {
 function pendingTransferTable(transfers, includeSender = true) {
   if (!transfers.length) return '<p class="empty-state">No pending transfers.</p>';
   const senderHeading = includeSender ? "<th>Sender</th>" : "";
-  const rows = transfers.map(({ user, transaction }) => `<tr>${includeSender ? `<td>${escapeHTML(user.name)}<small class="admin-transfer-email">${escapeHTML(user.email)}</small></td>` : ""}<td>${escapeHTML(transaction.recipientName || transaction.name)}</td><td>${escapeHTML(transaction.routingNumber || "—")}</td><td>${escapeHTML(transaction.accountNumber || "—")}</td><td>${money(Math.abs(transaction.amount), user.account.currency)}</td><td>${new Date(transaction.createdAt || transaction.date).toLocaleString()}</td><td>${pendingTransferActions(user.email, transaction.id)}</td></tr>`).join("");
+  const rows = transfers.map(({ user, transaction }) => `<tr>${includeSender ? `<td>${escapeHTML(user.name)}<small class="admin-transfer-email">${escapeHTML(user.email)}</small></td>` : ""}<td><strong>${escapeHTML(transaction.recipientName || transaction.name)}</strong>${transaction.recipientCountry ? `<small class="admin-transfer-email">${escapeHTML(transaction.recipientCountry)}${transaction.recipientAddress ? " · " + escapeHTML(transaction.recipientAddress) : ""}</small>` : ""}${transaction.recipientPhone ? `<small class="admin-transfer-email">${escapeHTML(transaction.recipientPhone)}</small>` : ""}</td><td>${transaction.bankName ? `<strong>${escapeHTML(transaction.bankName)}</strong><small class="admin-transfer-email">${escapeHTML(transaction.routingNumber || "—")}</small>` : escapeHTML(transaction.routingNumber || "—")}</td><td>${escapeHTML(transaction.accountNumber || "—")}</td><td>${money(Math.abs(transaction.amount), user.account.currency)}</td><td>${new Date(transaction.createdAt || transaction.date).toLocaleString()}</td><td>${pendingTransferActions(user.email, transaction.id)}</td></tr>`).join("");
   return `<div class="transaction-wrap"><table class="transactions pending-transfer-table"><thead><tr>${senderHeading}<th>Recipient</th><th>Bank / Routing</th><th>Account</th><th>Amount</th><th>Submitted</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
@@ -638,7 +638,7 @@ function transferView() {
       <div class="page-heading"><p class="eyebrow">Payments</p><h1>Transfer Funds</h1><p>Send a transfer from your ${escapeHTML(account.accountType.toLowerCase())} account.</p></div>
       <div class="portal-layout"><form class="portal-panel portal-form" id="transfer-form" novalidate>
         <div class="panel-heading"><h2>Recipient details</h2><span>Available balance: ${money(availableBalance, account.currency)}</span></div>
-        <label class="portal-field"><span>Recipient name</span><input name="recipientName" autocomplete="name" placeholder="Full name" required></label>
+        <label class="portal-field"><span>Recipient full name</span><input name="recipientName" autocomplete="name" placeholder="Full legal name" required></label><label class="portal-field"><span>Recipient address</span><input name="recipientAddress" placeholder="Residential address and city" required></label><label class="portal-field"><span>Country</span><select name="recipientCountry" required><option value="United States" selected>United States</option><option value="Germany">Germany</option><option value="United Kingdom">United Kingdom</option><option value="Canada">Canada</option><option value="Ghana">Ghana</option><option value="Nigeria">Nigeria</option><option value="France">France</option><option value="United Arab Emirates">United Arab Emirates</option><option value="South Africa">South Africa</option><option value="Other International">Other International</option></select></label><label class="portal-field"><span>Recipient phone number</span><input name="recipientPhone" type="tel" placeholder="+1 555 019 2834" required></label><label class="portal-field"><span>Bank name</span><input name="bankName" placeholder="Receiving bank name" required></label><label class="portal-field"><span>Currency</span><select name="transferCurrency" required><option value="USD">USD ($)</option><option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option><option value="GHS">GHS (₵)</option></select></label>
         <label class="portal-field"><span>Recipient bank / routing number</span><input name="routingNumber" inputmode="numeric" autocomplete="off" placeholder="Bank or routing number" required minlength="4"></label>
         <label class="portal-field"><span>Account number</span><input name="recipientAccount" inputmode="numeric" autocomplete="off" placeholder="Recipient account number" required minlength="4"></label>
         <label class="portal-field"><span>Amount (${escapeHTML(account.currency)})</span><input name="amount" type="number" min="0.01" max="${availableBalance}" step="0.01" placeholder="0.00" required></label>
@@ -1187,7 +1187,7 @@ document.addEventListener("submit", async (event) => {
         type: "Debit",
         date: now,
         amount: -amount,
-        note: String(values.get("note")).trim(),
+        note: String(values.get("note")).trim(), recipientAddress: String(values.get("recipientAddress") || "").trim(), recipientCountry: String(values.get("recipientCountry") || "").trim(), recipientPhone: String(values.get("recipientPhone") || "").trim(), bankName: String(values.get("bankName") || "").trim(), transferCurrency: String(values.get("transferCurrency") || data.currency).trim(),
         routingNumber: String(values.get("routingNumber")).trim(),
         accountNumber: String(values.get("recipientAccount")).trim(),
         status: "Pending",
@@ -1210,7 +1210,7 @@ document.addEventListener("submit", async (event) => {
           <p>Your transfer has been submitted and is awaiting administrator review.</p>
           <table class="receipt-table">
             <tr><th>Status</th><td><span class="status-badge status-pending">Pending</span></td></tr>
-            <tr><th>Amount</th><td>${money(amount, data.currency)}</td></tr>
+            <tr><th>Amount</th><td>${money(amount, submittedTransaction.transferCurrency || data.currency)} (${escapeHTML(submittedTransaction.transferCurrency || data.currency)})</td></tr><tr><th>Recipient Address</th><td>${escapeHTML(submittedTransaction.recipientAddress || "—")}</td></tr><tr><th>Country</th><td>${escapeHTML(submittedTransaction.recipientCountry || "—")}</td></tr><tr><th>Phone Number</th><td>${escapeHTML(submittedTransaction.recipientPhone || "—")}</td></tr><tr><th>Bank Name</th><td>${escapeHTML(submittedTransaction.bankName || "—")}</td></tr>
             <tr><th>Recipient Name</th><td>${escapeHTML(submittedTransaction.recipientName)}</td></tr>
             <tr><th>Bank / Routing Number</th><td>${escapeHTML(submittedTransaction.routingNumber)}</td></tr>
             <tr><th>Account Number</th><td>${escapeHTML(submittedTransaction.accountNumber)}</td></tr>
@@ -1484,5 +1484,6 @@ render();
   }
   new MutationObserver(initAll).observe(document.documentElement, { childList: true, subtree: true });
 })();
+
 
 
