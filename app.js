@@ -1020,7 +1020,7 @@ document.addEventListener("submit", async (event) => {
     const form = event.target;
     const message = form.querySelector("#form-message");
     const formData = new FormData(form);
-    const email = String(formData.get("email")).trim().toLowerCase();
+    let email = String(formData.get("email")).trim().toLowerCase();
     const password = String(formData.get("password"));
     if (!form.checkValidity()) {
       form.reportValidity();
@@ -1484,4 +1484,5 @@ render();
   }
   new MutationObserver(initAll).observe(document.documentElement, { childList: true, subtree: true });
 })();
+
 
