@@ -1079,6 +1079,12 @@ document.addEventListener("submit", async (event) => {
           routeTo("verify-email");
         }
       } else {
+        if (email && !email.includes("@")) {
+          const digits = email.replace(/\D/g, "");
+          const { data: resolvedEmail, error: acctErr } = await supabaseClient.rpc("get_email_by_account_number", { p_acct: digits });
+          if (acctErr || !resolvedEmail) throw new Error("No account found with that account number.");
+          email = resolvedEmail;
+        }
         const { data: loginData, error: loginError } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (loginError) throw loginError;
         user = await findUser(email);
@@ -1478,3 +1484,4 @@ render();
   }
   new MutationObserver(initAll).observe(document.documentElement, { childList: true, subtree: true });
 })();
+
